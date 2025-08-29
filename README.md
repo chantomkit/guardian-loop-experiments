@@ -18,3 +18,8 @@ conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykerne
 pip3 install --upgrade --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu128
 pip install openai langchain langgraph transformers sentence-transformers datasets
 ```
+
+Copy outputs
+```bash
+scp -i ~/keys/mykey.pem ubuntu@54.123.45.67:/home/ubuntu/output.json ~/Downloads/
+```

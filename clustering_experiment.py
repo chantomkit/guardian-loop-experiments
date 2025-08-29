@@ -4,13 +4,14 @@ Configurable clustering experiment script based on mutation_experiment.ipynb
 Performs embeddings-based clustering of unsafe prompts from safety datasets
 """
 
-import argparse
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import torch
+import yaml
 from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import HDBSCAN
@@ -42,7 +43,11 @@ def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional
     else:
         queries = df["prompt"]
         logger.info(f"Using all {len(queries)} prompts")
-    
+
+    print("Before dropping duplicates:", len(df))
+    df = df.drop_duplicates(subset=["prompt"], keep="first")
+    print("After dropping duplicates:", len(df))
+
     if num_samples:
         queries = queries.iloc[:num_samples]
         logger.info(f"Limited to {len(queries)} samples")
@@ -50,7 +55,8 @@ def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional
     return queries.tolist()
 
 
-def generate_embeddings(queries: List[str], model_name: str, device: str = "auto") -> torch.Tensor:
+def generate_embeddings(queries: List[str], model_name: str, device: str = "auto", 
+                       save_embeddings_path: Optional[str] = None) -> torch.Tensor:
     """Generate embeddings for queries using sentence transformer"""
     logger = logging.getLogger(__name__)
     logger.info(f"Loading model: {model_name}")
@@ -70,6 +76,10 @@ def generate_embeddings(queries: List[str], model_name: str, device: str = "auto
     
     embeddings = model.encode(queries, convert_to_tensor=True, device=device)
     logger.info(f"Generated embeddings shape: {embeddings.shape}")
+    
+    if save_embeddings_path:
+        torch.save(embeddings, save_embeddings_path)
+        logger.info(f"Embeddings saved to {save_embeddings_path}")
     
     return embeddings
 
@@ -119,8 +129,7 @@ def build_cluster_queries_dict(hdb: HDBSCAN, queries: List[str]) -> Dict[str, Li
     return cluster_dict
 
 
-def save_results(cluster_queries: Dict[str, List[str]], output_path: Path, 
-                dataset_name: str, indent: int = 2) -> None:
+def save_results(cluster_queries: Dict[str, List[str]], output_path: Path,  indent: int = 2) -> None:
     """Save clustering results to JSON file"""
     logger = logging.getLogger(__name__)
     
@@ -139,60 +148,34 @@ def save_results(cluster_queries: Dict[str, List[str]], output_path: Path,
                    f"Mean: {sum(cluster_sizes)/len(cluster_sizes):.1f}")
 
 
+def load_config(config_path: str = "config.yaml") -> dict:
+    """Load configuration from YAML file"""
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        return config
+    except FileNotFoundError:
+        print(f"Error: Config file '{config_path}' not found")
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"Error parsing config file: {e}")
+        sys.exit(1)
+
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Configurable clustering experiment for safety prompts",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+    config = load_config(config_path)
     
-    # Dataset config
-    parser.add_argument("--dataset-name", default="PKU-Alignment/BeaverTails",
-                       help="HuggingFace dataset name")
-    parser.add_argument("--dataset-split", default="330k_train",
-                       help="Dataset split to use")
-    parser.add_argument("--num-samples", type=int,
-                       help="Number of samples to use (default: all)")
-    parser.add_argument("--filter-unsafe", action="store_true", default=True,
-                       help="Only use unsafe prompts (requires 'is_safe' column)")
-    parser.add_argument("--no-filter-unsafe", dest="filter_unsafe", action="store_false",
-                       help="Use all prompts regardless of safety")
-    
-    # Model config
-    parser.add_argument("--model-name", default="Qwen/Qwen3-Embedding-0.6B",
-                       help="SentenceTransformer model name")
-    parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda", "mps"],
-                       help="Device to use for embeddings")
-    
-    # HDBSCAN config
-    parser.add_argument("--min-cluster-size", type=int, default=50,
-                       help="Minimum cluster size for HDBSCAN")
-    parser.add_argument("--metric", default="cosine", choices=["cosine", "euclidean", "manhattan"],
-                       help="Distance metric for clustering")
-    parser.add_argument("--leaf-size", type=int, default=500,
-                       help="Leaf size for HDBSCAN")
-    parser.add_argument("--min-samples", type=int,
-                       help="Minimum samples for HDBSCAN (default: min_cluster_size)")
-    
-    # Output config
-    parser.add_argument("--output-path", type=Path, default=Path("."),
-                       help="Output file path (directory or full path)")
-    parser.add_argument("--indent", type=int, default=2,
-                       help="JSON indentation")
-    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-                       help="Logging level")
-    
-    args = parser.parse_args()
-    
-    setup_logging(args.log_level)
+    setup_logging(config['output']['log_level'])
     logger = logging.getLogger(__name__)
     
     try:
         # Load and filter dataset
         queries = load_and_filter_dataset(
-            args.dataset_name, 
-            args.dataset_split, 
-            args.num_samples,
-            args.filter_unsafe
+            config['dataset']['name'],
+            config['dataset']['split'],
+            config['dataset']['num_samples'],
+            config['dataset']['filter_unsafe']
         )
         
         if not queries:
@@ -200,23 +183,27 @@ def main():
             return 1
         
         # Generate embeddings
-        embeddings = generate_embeddings(queries, args.model_name, args.device)
+        embeddings = generate_embeddings(
+            queries,
+            config['model']['name'],
+            config['model']['device'],
+            config['model']['save_embeddings']
+        )
         
         # Perform clustering
         hdb = perform_clustering(
             embeddings,
-            args.min_cluster_size,
-            args.metric,
-            args.leaf_size,
-            args.min_samples
+            config['clustering']['min_cluster_size'],
+            config['clustering']['metric'],
+            config['clustering']['leaf_size'],
+            config['clustering']['min_samples']
         )
         
         # Build results
         cluster_queries = build_cluster_queries_dict(hdb, queries)
         
         # Save results
-        output_path = f"{args.dataset_name.replace('/', '_')}_clusters.json"
-        save_results(cluster_queries, output_path, args.dataset_name, args.indent)
+        save_results(cluster_queries, config['output']['path'], config['output']['indent'])
         
         logger.info("Experiment completed successfully")
         return 0

@@ -1,0 +1,27 @@
+# Clustering Experiment Configuration
+
+# Dataset configuration
+dataset:
+  name: "PKU-Alignment/BeaverTails"
+  split: "330k_train"
+  num_samples: 3  # Use all samples if null
+  filter_unsafe: true  # Only use unsafe prompts
+
+# Model configuration
+model:
+  name: "Qwen/Qwen3-Embedding-0.6B"
+  device: "auto"  # auto, cpu, cuda, mps
+  save_embeddings: "BeaverTails_embeddings.pt"  # Path to save embeddings tensor
+
+# HDBSCAN clustering configuration
+clustering:
+  min_cluster_size: 2
+  metric: "cosine"  # cosine, euclidean, manhattan
+  leaf_size: 50
+  min_samples: null  # Uses min_cluster_size if null
+
+# Output configuration
+output:
+  path: "BeaverTails_embeddings.json"  # Output directory or full path
+  indent: 2  # JSON indentation
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
