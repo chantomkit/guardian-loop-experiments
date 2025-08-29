@@ -4,7 +4,7 @@
 dataset:
   name: "PKU-Alignment/BeaverTails"
   split: "330k_train"
-  num_samples: 3  # Use all samples if null
+  num_samples: null  # Use all samples if null
   filter_unsafe: true  # Only use unsafe prompts
 
 # Model configuration
@@ -15,7 +15,7 @@ model:
 
 # HDBSCAN clustering configuration
 clustering:
-  min_cluster_size: 2
+  min_cluster_size: 10
   metric: "cosine"  # cosine, euclidean, manhattan
   leaf_size: 50
   min_samples: null  # Uses min_cluster_size if null
