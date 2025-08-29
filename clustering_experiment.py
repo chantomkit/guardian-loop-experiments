@@ -164,11 +164,11 @@ def main():
                        help="Device to use for embeddings")
     
     # HDBSCAN config
-    parser.add_argument("--min-cluster-size", type=int, default=5,
+    parser.add_argument("--min-cluster-size", type=int, default=50,
                        help="Minimum cluster size for HDBSCAN")
     parser.add_argument("--metric", default="cosine", choices=["cosine", "euclidean", "manhattan"],
                        help="Distance metric for clustering")
-    parser.add_argument("--leaf-size", type=int, default=50,
+    parser.add_argument("--leaf-size", type=int, default=500,
                        help="Leaf size for HDBSCAN")
     parser.add_argument("--min-samples", type=int,
                        help="Minimum samples for HDBSCAN (default: min_cluster_size)")
