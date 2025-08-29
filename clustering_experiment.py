@@ -124,13 +124,6 @@ def save_results(cluster_queries: Dict[str, List[str]], output_path: Path,
     """Save clustering results to JSON file"""
     logger = logging.getLogger(__name__)
     
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Create filename if not specified
-    if output_path.name == ".":
-        safe_dataset_name = dataset_name.replace('/', '_')
-        output_path = output_path / f"{safe_dataset_name}_clusters.json"
-    
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(cluster_queries, f, indent=indent, ensure_ascii=False)
     
@@ -222,7 +215,8 @@ def main():
         cluster_queries = build_cluster_queries_dict(hdb, queries)
         
         # Save results
-        save_results(cluster_queries, args.output_path, args.dataset_name, args.indent)
+        output_path = f"{args.dataset_name.replace('/', '_')}_clusters.json"
+        save_results(cluster_queries, output_path, args.dataset_name, args.indent)
         
         logger.info("Experiment completed successfully")
         return 0

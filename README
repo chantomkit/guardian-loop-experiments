@@ -1,0 +1,1 @@
+ssh -i '<SSH-KEY-FILE-PATH>' ubuntu@<INSTANCE-IP>
