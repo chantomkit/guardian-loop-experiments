@@ -21,6 +21,6 @@ clustering:
 
 # Output configuration
 output:
-  path: "BeaverTails_embeddings.json"  # Output directory or full path
+  path: "BeaverTails_clusters.json"  # Output directory or full path
   indent: 2  # JSON indentation
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
