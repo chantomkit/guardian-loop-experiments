@@ -5,7 +5,6 @@ dataset:
   name: "PKU-Alignment/BeaverTails"
   split: "330k_train"
   num_samples: null  # Use all samples if null
-  filter_unsafe: true  # Only use unsafe prompts
 
 # Model configuration
 model:

@@ -36,17 +36,12 @@ def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional
     df = dataset[split].data.to_pandas()
     
     logger.info(f"Dataset shape: {df.shape}")
-    
-    if filter_unsafe and 'is_safe' in df.columns:
-        queries = df.loc[~df["is_safe"], "prompt"]
-        logger.info(f"Filtered to {len(queries)} unsafe prompts")
-    else:
-        queries = df["prompt"]
-        logger.info(f"Using all {len(queries)} prompts")
+    queries = df.loc[~df["is_safe"], "prompt"]
+    logger.info(f"Filtered to {len(queries)} unsafe prompts")
 
-    print("Before dropping duplicates:", len(df))
-    df = df.drop_duplicates(subset=["prompt"], keep="first")
-    print("After dropping duplicates:", len(df))
+    print("Before dropping duplicates:", len(queries))
+    queries = queries.drop_duplicates(subset=["prompt"], keep="first")
+    print("After dropping duplicates:", len(queries))
 
     if num_samples:
         queries = queries.iloc[:num_samples]
