@@ -11,3 +11,4 @@ transformers
 sentence-transformers
 datasets
 ipykernel
+dotenv
