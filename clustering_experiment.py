@@ -26,8 +26,7 @@ def setup_logging(log_level: str = "INFO") -> None:
     )
 
 
-def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional[int] = None, 
-                           filter_unsafe: bool = True) -> List[str]:
+def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional[int] = None) -> List[str]:
     """Load dataset and extract prompts"""
     logger = logging.getLogger(__name__)
     logger.info(f"Loading dataset: {dataset_name}, split: {split}")
@@ -170,7 +169,6 @@ def main():
             config['dataset']['name'],
             config['dataset']['split'],
             config['dataset']['num_samples'],
-            config['dataset']['filter_unsafe']
         )
         
         if not queries:
