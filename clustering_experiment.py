@@ -148,7 +148,7 @@ def main():
     # Dataset config
     parser.add_argument("--dataset-name", default="PKU-Alignment/BeaverTails",
                        help="HuggingFace dataset name")
-    parser.add_argument("--dataset-split", default="30k_train",
+    parser.add_argument("--dataset-split", default="330k_train",
                        help="Dataset split to use")
     parser.add_argument("--num-samples", type=int,
                        help="Number of samples to use (default: all)")
@@ -164,11 +164,11 @@ def main():
                        help="Device to use for embeddings")
     
     # HDBSCAN config
-    parser.add_argument("--min-cluster-size", type=int, default=3,
+    parser.add_argument("--min-cluster-size", type=int, default=5,
                        help="Minimum cluster size for HDBSCAN")
     parser.add_argument("--metric", default="cosine", choices=["cosine", "euclidean", "manhattan"],
                        help="Distance metric for clustering")
-    parser.add_argument("--leaf-size", type=int, default=10,
+    parser.add_argument("--leaf-size", type=int, default=50,
                        help="Leaf size for HDBSCAN")
     parser.add_argument("--min-samples", type=int,
                        help="Minimum samples for HDBSCAN (default: min_cluster_size)")
