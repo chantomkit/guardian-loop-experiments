@@ -39,7 +39,7 @@ def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional
     logger.info(f"Filtered to {len(queries)} unsafe prompts")
 
     print("Before dropping duplicates:", len(queries))
-    queries = queries.drop_duplicates(subset=["prompt"], keep="first")
+    queries = queries.drop_duplicates(keep="first")
     print("After dropping duplicates:", len(queries))
 
     if num_samples:
