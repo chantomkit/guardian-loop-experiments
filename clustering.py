@@ -88,14 +88,21 @@ def generate_embeddings(queries: List[str], model_name: str, device: str = "auto
     return embeddings
 
 
-def perform_clustering(embeddings: torch.Tensor, metric: str = "cosine") -> HDBSCAN:
+def perform_clustering(embeddings: torch.Tensor, min_cluster_size: int = 3, 
+                      metric: str = "cosine", leaf_size: int = 10, 
+                      min_samples: Optional[int] = None) -> HDBSCAN:
     """Perform HDBSCAN clustering on embeddings"""
     logger = logging.getLogger(__name__)
-    logger.info(f"Performing HDBSCAN clustering")
-
+    logger.info(f"Performing HDBSCAN clustering with min_cluster_size={min_cluster_size}")
+    
     cluster_params = {
-        'metric': metric
+        'min_cluster_size': min_cluster_size,
+        'metric': metric,
+        'leaf_size': leaf_size
     }
+    
+    if min_samples is not None:
+        cluster_params['min_samples'] = min_samples
     
     hdb = HDBSCAN(**cluster_params)
     hdb.fit(embeddings.cpu().numpy())
@@ -200,7 +207,10 @@ def main():
         # Perform clustering
         hdb = perform_clustering(
             embeddings,
+            config['clustering']['min_cluster_size'],
             config['clustering']['metric'],
+            config['clustering']['leaf_size'],
+            config['clustering']['min_samples']
         )
         
         # Build results
