@@ -17,7 +17,7 @@ model:
 clustering:
   min_cluster_size: 3
   metric: "cosine"  # cosine, euclidean, manhattan
-  leaf_size: null
+  leaf_size: 40
   min_samples: null  # Uses min_cluster_size if null
 
 # Output configuration
