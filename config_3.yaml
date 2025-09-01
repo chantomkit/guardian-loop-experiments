@@ -3,7 +3,7 @@
 # Dataset configuration
 dataset:
   name: "AI-Secure/PolyGuard"
-  subset: "finance_input"
+  subset: "law_input"
   split: null
   num_samples: null  # Use all samples if null
 
@@ -11,7 +11,7 @@ dataset:
 model:
   name: "Qwen/Qwen3-Embedding-0.6B"
   device: "auto"  # auto, cpu, cuda, mps
-  save_embeddings: "PolyGuard_finance_embeddings.pt"  # Path to save embeddings tensor
+  save_embeddings: "PolyGuard_law_embeddings.pt"  # Path to save embeddings tensor
 
 # HDBSCAN clustering configuration
 clustering:
@@ -19,6 +19,6 @@ clustering:
 
 # Output configuration
 output:
-  path: "PolyGuard_finance_clusters.json"  # Output directory or full path
+  path: "PolyGuard_law_clusters.json"  # Output directory or full path
   indent: 2  # JSON indentation
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
