@@ -38,12 +38,23 @@ def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, spl
         queries = df.loc[~df["is_safe"], "prompt"]
         logger.info(f"Filtered to {len(queries)} unsafe prompts")
 
-    elif dataset_name == "AI-Secure/PolyGuard":
+    elif (dataset_name == "AI-Secure/PolyGuard"):
         dataset = load_dataset(dataset_name, subset)
-        unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
-        df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
-        df = pd.concat(df_list, ignore_index=True)
-        queries = df["original instance"]
+        if subset == "finance_input" or subset == "law_input":
+            unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
+            df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
+            df = pd.concat(df_list, ignore_index=True)
+            queries = df["original instance"]
+        elif subset == "cyber":
+            df_list = [dataset[split].data.to_pandas() for split in dataset.column_names.keys()]
+            df = pd.concat(df_list, ignore_index=True)
+            df = df.loc[df.label == "unsafe", :]
+            queries = df["prompt"]
+        elif subset == "education":
+            unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
+            df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
+            df = pd.concat(df_list, ignore_index=True)
+            queries = df["instance"]
 
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
