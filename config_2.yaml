@@ -2,9 +2,9 @@
 
 # Dataset configuration
 dataset:
-  name: "PKU-Alignment/BeaverTails"
-  subset: null
-  split: "330k_train"
+  name: "AI-Secure/PolyGuard"
+  subset: "finance_input"
+  split: null
   num_samples: null  # Use all samples if null
 
 # Model configuration

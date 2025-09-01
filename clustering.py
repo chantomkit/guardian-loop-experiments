@@ -26,17 +26,27 @@ def setup_logging(log_level: str = "INFO") -> None:
     )
 
 
-def load_and_filter_dataset(dataset_name: str, split: str, num_samples: Optional[int] = None) -> List[str]:
+def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, split: Optional[str] = None, num_samples: Optional[int] = None) -> List[str]:
     """Load dataset and extract prompts"""
     logger = logging.getLogger(__name__)
-    logger.info(f"Loading dataset: {dataset_name}, split: {split}")
-    
-    dataset = load_dataset(dataset_name)
-    df = dataset[split].data.to_pandas()
-    
-    logger.info(f"Dataset shape: {df.shape}")
-    queries = df.loc[~df["is_safe"], "prompt"]
-    logger.info(f"Filtered to {len(queries)} unsafe prompts")
+    logger.info(f"Loading dataset: {dataset_name}, subset: {subset}, split: {split}")
+
+    if dataset_name == "PKU-Alignment/BeaverTails":
+        dataset = load_dataset(dataset_name)
+        df = dataset[split].data.to_pandas()
+        logger.info(f"Dataset shape: {df.shape}")
+        queries = df.loc[~df["is_safe"], "prompt"]
+        logger.info(f"Filtered to {len(queries)} unsafe prompts")
+
+    elif dataset_name == "AI-Secure/PolyGuard":
+        dataset = load_dataset(dataset_name, subset)
+        unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
+        df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
+        df = pd.concat(df_list, ignore_index=True)
+        queries = df["original instance"]
+
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
 
     print("Before dropping duplicates:", len(queries))
     queries = queries.drop_duplicates(keep="first")
@@ -78,21 +88,14 @@ def generate_embeddings(queries: List[str], model_name: str, device: str = "auto
     return embeddings
 
 
-def perform_clustering(embeddings: torch.Tensor, min_cluster_size: int = 3, 
-                      metric: str = "cosine", leaf_size: int = 10, 
-                      min_samples: Optional[int] = None) -> HDBSCAN:
+def perform_clustering(embeddings: torch.Tensor, metric: str = "cosine") -> HDBSCAN:
     """Perform HDBSCAN clustering on embeddings"""
     logger = logging.getLogger(__name__)
-    logger.info(f"Performing HDBSCAN clustering with min_cluster_size={min_cluster_size}")
-    
+    logger.info(f"Performing HDBSCAN clustering")
+
     cluster_params = {
-        'min_cluster_size': min_cluster_size,
-        'metric': metric,
-        'leaf_size': leaf_size
+        'metric': metric
     }
-    
-    if min_samples is not None:
-        cluster_params['min_samples'] = min_samples
     
     hdb = HDBSCAN(**cluster_params)
     hdb.fit(embeddings.cpu().numpy())
@@ -105,8 +108,18 @@ def perform_clustering(embeddings: torch.Tensor, min_cluster_size: int = 3,
     return hdb
 
 
-def build_cluster_queries_dict(hdb: HDBSCAN, queries: List[str]) -> Dict[str, List[str]]:
-    """Build dictionary mapping cluster IDs to queries"""
+def build_cluster_dict(hdb: HDBSCAN, queries: List[str]) -> Dict[str, List[str]]:
+    """Build dictionary mapping cluster IDs to queries.
+
+    Dict format:
+    {
+        "cluster_id": [
+            (query, probability),
+            ...
+        ],
+        ...
+    }
+    """
     cluster_dict = {}
     
     for cluster_id in set(hdb.labels_):
@@ -118,25 +131,25 @@ def build_cluster_queries_dict(hdb: HDBSCAN, queries: List[str]) -> Dict[str, Li
 
         for i, label in enumerate(hdb.labels_):
             if label == cluster_id:
-                cluster_dict[cluster_str].append(queries[i])
-    
+                cluster_dict[cluster_str].append((queries[i], hdb.probabilities_[i]))
+
     return cluster_dict
 
 
-def save_results(cluster_queries: Dict[str, List[str]], output_path: Path,  indent: int = 2) -> None:
+def save_results(cluster_dict: Dict[str, List[str]], output_path: Path,  indent: int = 2) -> None:
     """Save clustering results to JSON file"""
     logger = logging.getLogger(__name__)
     
     with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(cluster_queries, f, indent=indent, ensure_ascii=False)
-    
+        json.dump(cluster_dict, f, indent=indent, ensure_ascii=False)
+
     logger.info(f"Results saved to {output_path}")
-    
+
     # Log cluster statistics
-    total_queries = sum(len(queries) for queries in cluster_queries.values())
-    logger.info(f"Clustered {total_queries} queries into {len(cluster_queries)} clusters")
-    
-    cluster_sizes = [len(queries) for queries in cluster_queries.values()]
+    total_queries = sum(len(queries) for queries in cluster_dict.values())
+    logger.info(f"Clustered {total_queries} queries into {len(cluster_dict)} clusters")
+
+    cluster_sizes = [len(queries) for queries in cluster_dict.values()]
     if cluster_sizes:
         logger.info(f"Cluster sizes - Min: {min(cluster_sizes)}, Max: {max(cluster_sizes)}, "
                    f"Mean: {sum(cluster_sizes)/len(cluster_sizes):.1f}")
@@ -167,6 +180,7 @@ def main():
         # Load and filter dataset
         queries = load_and_filter_dataset(
             config['dataset']['name'],
+            config['dataset']['subset'],
             config['dataset']['split'],
             config['dataset']['num_samples'],
         )
@@ -186,18 +200,15 @@ def main():
         # Perform clustering
         hdb = perform_clustering(
             embeddings,
-            config['clustering']['min_cluster_size'],
             config['clustering']['metric'],
-            config['clustering']['leaf_size'],
-            config['clustering']['min_samples']
         )
         
         # Build results
-        cluster_queries = build_cluster_queries_dict(hdb, queries)
-        
+        cluster_dict = build_cluster_dict(hdb, queries)
+
         # Save results
-        save_results(cluster_queries, config['output']['path'], config['output']['indent'])
-        
+        save_results(cluster_dict, config['output']['path'], config['output']['indent'])
+
         logger.info("Experiment completed successfully")
         return 0
         
