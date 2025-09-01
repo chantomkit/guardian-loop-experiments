@@ -1,0 +1,24 @@
+# Clustering Experiment Configuration
+
+# Dataset configuration
+dataset:
+  name: "AI-Secure/PolyGuard"
+  subset: "education"
+  split: null
+  num_samples: null  # Use all samples if null
+
+# Model configuration
+model:
+  name: "Qwen/Qwen3-Embedding-0.6B"
+  device: "auto"  # auto, cpu, cuda, mps
+  save_embeddings: "PolyGuard_education_embeddings.pt"  # Path to save embeddings tensor
+
+# HDBSCAN clustering configuration
+clustering:
+  metric: "cosine"  # cosine, euclidean, manhattan
+
+# Output configuration
+output:
+  path: "PolyGuard_education_clusters.json"  # Output directory or full path
+  indent: 2  # JSON indentation
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR

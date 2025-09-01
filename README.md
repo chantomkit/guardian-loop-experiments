@@ -14,7 +14,7 @@ Install packages
 ```bash
 conda create -n guardian-loop python=3.10 -y
 conda activate guardian-loop
-conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykernel -y
+conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykernel yaml -y
 pip3 install --upgrade --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu128
 pip install openai langchain langgraph transformers sentence-transformers datasets
 ```
