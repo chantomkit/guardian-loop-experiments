@@ -9,7 +9,7 @@ dataset:
 
 # Model configuration
 model:
-  name: "Qwen/Qwen3-Embedding-0.6B"
+  name: "Qwen/Qwen3-Embedding-8B"
   device: "auto"  # auto, cpu, cuda, mps
   save_embeddings: "PolyGuard_education_embeddings.pt"  # Path to save embeddings tensor
 
