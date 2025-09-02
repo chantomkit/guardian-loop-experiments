@@ -9,6 +9,8 @@ Follow the guide: https://docs.lambda.ai/public-cloud/on-demand/managing-system-
 3. If x86: curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 4. sh Miniconda3-latest-Linux-*.sh
 5. source ~/.bashrc
+6. conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+7. conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
 Install packages
 ```bash
