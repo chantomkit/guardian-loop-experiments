@@ -89,7 +89,17 @@ def generate_embeddings(queries: List[str], model_name: str, device: str = "auto
     logger.info(f"Using device: {device}")
     logger.info(f"Encoding {len(queries)} queries...")
     
-    embeddings = model.encode(queries, convert_to_tensor=True, device=device)
+    TASK_PROMPT = """
+    You are an embedding model used for clustering harmful queries.
+    Input: a harmful user query from the {DOMAIN} safety domain.
+    Task: generate an embedding that captures the query’s harmful intent, risk characteristics, and rule violations.
+    Guidelines:
+    - Focus on semantic features that represent harmful context (e.g., malicious action, unsafe request, sensitive target).
+    - Down-weight neutral or filler text (e.g., politeness, irrelevant context).
+    - Represent the underlying type of harm so that similar harmful queries cluster together.
+    """
+    prompt = TASK_PROMPT.format(DOMAIN="")
+    embeddings = model.encode(queries, convert_to_tensor=True, prompt=prompt, device=device)
     logger.info(f"Generated embeddings shape: {embeddings.shape}")
     
     if save_embeddings_path:

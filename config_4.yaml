@@ -10,6 +10,7 @@ dataset:
 # Model configuration
 model:
   name: "Qwen/Qwen3-Embedding-8B"
+  domain: "cyber"
   device: "auto"  # auto, cpu, cuda, mps
   save_embeddings: "PolyGuard_cyber_embeddings.pt"  # Path to save embeddings tensor
 
