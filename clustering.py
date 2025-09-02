@@ -70,7 +70,7 @@ def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, spl
     return queries.tolist()
 
 
-def generate_embeddings(queries: List[str], model_name: str, device: str = "auto", 
+def generate_embeddings(queries: List[str], model_name: str, domain: str, device: str = "auto", 
                        save_embeddings_path: Optional[str] = None) -> torch.Tensor:
     """Generate embeddings for queries using sentence transformer"""
     logger = logging.getLogger(__name__)
@@ -98,7 +98,9 @@ def generate_embeddings(queries: List[str], model_name: str, device: str = "auto
     - Down-weight neutral or filler text (e.g., politeness, irrelevant context).
     - Represent the underlying type of harm so that similar harmful queries cluster together.
     """
-    prompt = TASK_PROMPT.format(DOMAIN="")
+    prompt = TASK_PROMPT.format(DOMAIN=domain)
+    print("TASK PROMPT:" + prompt)
+
     embeddings = model.encode(queries, convert_to_tensor=True, prompt=prompt, device=device)
     logger.info(f"Generated embeddings shape: {embeddings.shape}")
     
@@ -221,6 +223,7 @@ def main():
         embeddings = generate_embeddings(
             queries,
             config['model']['name'],
+            config['model']['domain'],
             config['model']['device'],
             config['model']['save_embeddings']
         )
