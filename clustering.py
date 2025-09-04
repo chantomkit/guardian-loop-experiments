@@ -16,6 +16,7 @@ from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import HDBSCAN
 import pandas as pd
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def setup_logging(log_level: str = "INFO") -> None:
@@ -90,13 +91,13 @@ def generate_embeddings(queries: List[str], model_name: str, domain: str, device
     logger.info(f"Encoding {len(queries)} queries...")
     
     TASK_PROMPT = """
-    You are an embedding model used for clustering harmful queries.
-    Input: a harmful user query from the {DOMAIN} safety domain.
-    Task: generate an embedding that captures the query’s harmful intent, risk characteristics, and rule violations.
-    Guidelines:
-    - Focus on semantic features that represent harmful context (e.g., malicious action, unsafe request, sensitive target).
-    - Down-weight neutral or filler text (e.g., politeness, irrelevant context).
-    - Represent the underlying type of harm so that similar harmful queries cluster together.
+    Represent the following harmful user query from the {DOMAIN} safety domain as an embedding.
+    The embedding should emphasize:
+    - Harmful intent, unsafe action, or sensitive target.
+    - Risk characteristics and potential rule violations.
+    - Semantic similarity of harmful context, so that related harmful queries cluster together.
+    Ignore irrelevant details such as politeness, filler text, or non-harmful context.
+    Input query: 
     """
     prompt = TASK_PROMPT.format(DOMAIN=domain)
     print("TASK PROMPT:" + prompt)
@@ -185,6 +186,92 @@ def save_results(cluster_dict: Dict[str, List[str]], output_path: Path,  indent:
                    f"Mean: {sum(cluster_sizes)/len(cluster_sizes):.1f}")
 
 
+def mutate_queries(queries: List[str], batch_size: int = 4) -> List[str]:
+    """
+    Mutate a list of queries by paraphrasing them while preserving meaning.
+    Only activated when config['dataset']['mutate'] is True.
+    
+    Args:
+        queries (list): List of input queries to mutate
+        batch_size (int): Number of queries to process in each batch
+        
+    Returns:
+        list: List of mutated queries
+    """
+    logger = logging.getLogger(__name__)
+    logger.info(f"Mutating {len(queries)} queries")
+    
+    model_name = "Qwen/Qwen3-4B-Instruct-2507"
+    
+    # Load the tokenizer and model
+    logger.info(f"Loading mutation model: {model_name}")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype="auto",
+        device_map="auto"
+    )
+    
+    # Set padding token if not present
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    
+    TASK_PROMPT = """
+Paraphrase the entire text below.
+Preserve all meaning and details. Do not shorten, omit, or summarize.
+You may reword, restructure sentences, or adjust phrasing.
+
+Text: {input}
+"""
+    
+    mutated_queries = []
+    
+    # Create prompts for each query
+    all_prompts = []
+    for query in queries:
+        prompt = TASK_PROMPT.format(input=query)
+        messages = [{"role": "user", "content": prompt}]
+        text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        all_prompts.append(text)
+    
+    # Process in batches
+    for i in range(0, len(all_prompts), batch_size):
+        batch_prompts = all_prompts[i:i + batch_size]
+        logger.debug(f"Processing batch {i//batch_size + 1}/{(len(all_prompts) + batch_size - 1)//batch_size}")
+        
+        # Tokenize batch
+        model_inputs = tokenizer(
+            batch_prompts, 
+            return_tensors="pt", 
+            padding=True, 
+            truncation=True,
+            max_length=4096
+        ).to(model.device)
+        
+        # Generate in batch
+        generated_ids = model.generate(
+            **model_inputs,
+            max_new_tokens=1024,
+            do_sample=True,
+            temperature=0.7,
+            pad_token_id=tokenizer.pad_token_id
+        )
+        
+        # Decode each output, extracting only the generated portion
+        for j, gen_ids in enumerate(generated_ids):
+            input_length = len(model_inputs.input_ids[j])
+            output_ids = gen_ids[input_length:].tolist()
+            mutated_query = tokenizer.decode(output_ids, skip_special_tokens=True)
+            mutated_queries.append(mutated_query.strip())
+    
+    logger.info(f"Generated {len(mutated_queries)} mutated queries")
+    return mutated_queries
+
+
 def load_config(config_path: str = "config.yaml") -> dict:
     """Load configuration from YAML file"""
     try:
@@ -214,7 +301,11 @@ def main():
             config['dataset']['split'],
             config['dataset']['num_samples'],
         )
-        
+
+        # mutate queries
+        if config['dataset']['mutate']:
+            queries = mutate_queries(queries)
+
         if not queries:
             logger.error("No queries found after filtering")
             return 1

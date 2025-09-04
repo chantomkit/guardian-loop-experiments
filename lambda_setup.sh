@@ -37,7 +37,7 @@ conda activate guardian-loop
 
 # Step 9: Install required packages
 echo "Installing Python packages..."
-conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykernel pyyaml -y
+conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykernel pyyaml umap-learn -y
 
 # Step 10: Detect CUDA version for PyTorch
 TORCH_INDEX_URL="https://download.pytorch.org/whl"
@@ -64,6 +64,6 @@ fi
 pip install --upgrade --force-reinstall torch torchvision --index-url $TORCH_URL
 
 # Step 12: Install other libraries
-pip install openai langchain langgraph transformers sentence-transformers datasets
+pip install openai langchain langgraph transformers sentence-transformers datasets sentencepiece accelerate
 
 echo "✅ Setup complete. Run: conda activate guardian-loop"

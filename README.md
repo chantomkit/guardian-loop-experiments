@@ -18,10 +18,16 @@ conda create -n guardian-loop python=3.10 -y
 conda activate guardian-loop
 conda install -c conda-forge numpy pandas scikit-learn scipy matplotlib ipykernel yaml -y
 pip3 install --upgrade --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu128
-pip install openai langchain langgraph transformers sentence-transformers datasets
+pip install openai langchain langgraph transformers sentence-transformers datasets sentencepiece
 ```
 
 Copy outputs
 ```bash
 scp -i ~/keys/mykey.pem ubuntu@54.123.45.67:/home/ubuntu/output.json ~/Downloads/
 ```
+
+
+
+Next steps:
+1. Mutate phrasing of the original prompts to make some difference in wordings but keep same context
+2. Generate embeddings again with improved task prompt

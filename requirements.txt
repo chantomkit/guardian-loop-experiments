@@ -12,3 +12,6 @@ sentence-transformers
 datasets
 ipykernel
 dotenv
+umap-learn
+sentencepiece
+accelerate
