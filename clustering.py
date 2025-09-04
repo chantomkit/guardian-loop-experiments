@@ -6,6 +6,7 @@ Performs embeddings-based clustering of unsafe prompts from safety datasets
 
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -72,7 +73,7 @@ def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, spl
 
 
 def generate_embeddings(queries: List[str], model_name: str, domain: str, device: str = "auto", 
-                       save_embeddings_path: Optional[str] = None) -> torch.Tensor:
+                       save_embeddings_path: Optional[Path] = None) -> torch.Tensor:
     """Generate embeddings for queries using sentence transformer"""
     logger = logging.getLogger(__name__)
     logger.info(f"Loading model: {model_name}")
@@ -302,23 +303,29 @@ def main():
             config['dataset']['num_samples'],
         )
 
+        output_dir = Path(config['output']['dir_name'])
+        output_dir.mkdir(parents=True, exist_ok=True)
+
         # mutate queries
         if config['dataset']['mutate']:
             queries = mutate_queries(queries)
 
-        json.dump(queries, open(config['dataset']['save_queries'], "w"), indent=2)
+        queries_path = output_dir / Path("queries.json")
+        json.dump(queries, open(queries_path, "w"), indent=2)
+        print(f"Filtered queries saved to {queries_path}")
 
         if not queries:
             logger.error("No queries found after filtering")
             return 1
         
         # Generate embeddings
+        embeddings_path = output_dir / Path("embeddings.pt")
         embeddings = generate_embeddings(
             queries,
             config['model']['name'],
             config['model']['domain'],
             config['model']['device'],
-            config['model']['save_embeddings']
+            embeddings_path,
         )
         
         # Perform clustering
@@ -334,7 +341,8 @@ def main():
         cluster_dict = build_cluster_dict(hdb, queries)
 
         # Save results
-        save_results(cluster_dict, config['output']['path'], config['output']['indent'])
+        cluster_path = output_dir / Path("clusters.json")
+        save_results(cluster_dict, cluster_path)
 
         logger.info("Experiment completed successfully")
         return 0

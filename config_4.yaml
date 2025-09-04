@@ -7,14 +7,12 @@ dataset:
   split: null
   num_samples: null  # Use all samples if null
   mutate: false
-  save_queries: "PolyGuard_cyber_queries.json"  # Path to save filtered queries
 
 # Model configuration
 model:
   name: "Qwen/Qwen3-Embedding-8B"
   domain: "cyber"
   device: "auto"  # auto, cpu, cuda, mps
-  save_embeddings: "PolyGuard_cyber_embeddings.pt"  # Path to save embeddings tensor
 
 # HDBSCAN clustering configuration
 clustering:
@@ -25,6 +23,5 @@ clustering:
 
 # Output configuration
 output:
-  path: "PolyGuard_cyber_clusters.json"  # Output directory or full path
-  indent: 2  # JSON indentation
+  dir_name: "PolyGuard_cyber"
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
