@@ -306,6 +306,8 @@ def main():
         if config['dataset']['mutate']:
             queries = mutate_queries(queries)
 
+        json.dump(queries, open(config['dataset']['save_queries'], "w"), indent=2)
+
         if not queries:
             logger.error("No queries found after filtering")
             return 1

@@ -6,6 +6,7 @@ dataset:
   subset: "education"
   split: null
   num_samples: null  # Use all samples if null
+  save_queries: "PolyGuard_education_queries.json"  # Path to save filtered queries
 
 # Model configuration
 model:
