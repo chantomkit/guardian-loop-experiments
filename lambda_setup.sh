@@ -6,10 +6,10 @@ ARCH=$(uname -m)
 echo "Detected architecture: $ARCH"
 
 # Step 2 & 3: Download Miniconda installer
-if [[ "$ARCH" == "aarch64" ]]; then
+if [ "$ARCH" == "aarch64" ]; then
     echo "Downloading Miniconda for ARM64 (aarch64)..."
     wget -O Miniconda3.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
-elif [[ "$ARCH" == "x86_64" ]]; then
+elif [ "$ARCH" == "x86_64" ]; then
     echo "Downloading Miniconda for x86_64..."
     curl -o Miniconda3.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 else
