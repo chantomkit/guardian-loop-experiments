@@ -6,6 +6,7 @@ dataset:
   subset: "cyber"
   split: null
   num_samples: null  # Use all samples if null
+  mutate: false
   save_queries: "PolyGuard_cyber_queries.json"  # Path to save filtered queries
 
 # Model configuration

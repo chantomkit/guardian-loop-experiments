@@ -6,6 +6,7 @@ dataset:
   subset: null
   split: "330k_train"
   num_samples: null  # Use all samples if null
+  mutate: false
   save_queries: "BeaverTails_queries.json"  # Path to save filtered queries
 
 # Model configuration
