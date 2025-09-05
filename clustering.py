@@ -394,7 +394,6 @@ def main():
 
             if not queries:
                 logger.error("No queries found after filtering")
-                return 1
             
             # Generate embeddings
             embeddings_path = output_dir / Path("embeddings.pt")
@@ -422,13 +421,11 @@ def main():
             cluster_path = output_dir / Path("clusters.json")
             save_results(cluster_dict, cluster_path)
 
-            logger.info("Experiment completed successfully")
-            return 0
-        
+            logger.info(f"Experiment completed successfully: {config_path}")
+
         except Exception as e:
             logger.error(f"Experiment failed: {e}")
-            return 1
 
 
 if __name__ == "__main__":
-    exit(main())
+    main()

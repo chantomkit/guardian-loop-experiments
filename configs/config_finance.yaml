@@ -6,7 +6,7 @@ dataset:
   subset: "finance_input"
   split: null
   num_samples: null  # Use all samples if null
-  mutate: true
+  mutate: false
 
 # Model configuration
 model:
