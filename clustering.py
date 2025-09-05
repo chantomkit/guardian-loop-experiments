@@ -4,6 +4,7 @@ Configurable clustering experiment script based on mutation_experiment.ipynb
 Performs embeddings-based clustering of unsafe prompts from safety datasets
 """
 
+import gc
 import json
 import logging
 import os
@@ -387,6 +388,8 @@ def main():
             # mutate queries
             if config['dataset']['mutate']:
                 queries = mutate_queries(queries)
+                torch.cuda.empty_cache()
+                gc.collect()
 
             queries_path = output_dir / Path("queries.json")
             json.dump(queries, open(queries_path, "w"), indent=2)
@@ -404,6 +407,8 @@ def main():
                 config['model']['device'],
                 embeddings_path,
             )
+            embeddings = embeddings.cpu()
+            torch.cuda.empty_cache()
             
             # Perform clustering
             hdb = perform_clustering(
@@ -425,6 +430,10 @@ def main():
 
         except Exception as e:
             logger.error(f"Experiment failed: {e}")
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
 
 
 if __name__ == "__main__":
