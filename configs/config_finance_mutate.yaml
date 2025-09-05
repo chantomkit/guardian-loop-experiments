@@ -1,0 +1,27 @@
+# Clustering Experiment Configuration
+
+# Dataset configuration
+dataset:
+  name: "AI-Secure/PolyGuard"
+  subset: "finance_input"
+  split: null
+  num_samples: null  # Use all samples if null
+  mutate: true
+
+# Model configuration
+model:
+  name: "Qwen/Qwen3-Embedding-8B"
+  domain: "finance"
+  device: "auto"  # auto, cpu, cuda, mps
+
+# HDBSCAN clustering configuration
+clustering:
+  min_cluster_size: 3
+  metric: "cosine"  # cosine, euclidean, manhattan
+  leaf_size: 40
+  min_samples: null  # Uses min_cluster_size if null
+
+# Output configuration
+output:
+  dir_name: "PolyGuard_finance_mutate"
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR

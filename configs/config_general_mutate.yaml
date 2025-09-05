@@ -1,0 +1,27 @@
+# Clustering Experiment Configuration
+
+# Dataset configuration
+dataset:
+  name: "PKU-Alignment/BeaverTails"
+  subset: null
+  split: "330k_train"
+  num_samples: null  # Use all samples if null
+  mutate: true
+
+# Model configuration
+model:
+  name: "Qwen/Qwen3-Embedding-8B"
+  domain: "general"
+  device: "auto"  # auto, cpu, cuda, mps
+
+# HDBSCAN clustering configuration
+clustering:
+  min_cluster_size: 5
+  metric: "cosine"  # cosine, euclidean, manhattan
+  leaf_size: 40
+  min_samples: null  # Uses min_cluster_size if null
+
+# Output configuration
+output:
+  dir_name: "BeaverTails_mutate"
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
