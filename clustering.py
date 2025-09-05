@@ -303,7 +303,10 @@ Text: {input}
             sequences_for_input = generated_ids[start_idx:end_idx]
 
             # Randomly select one sequence
-            selected_sequence = random.choice(sequences_for_input)
+            indices = list(range(num_return_sequences))
+            random_choice_index = random.randint(0, num_return_sequences - 1)
+            selected_sequence = sequences_for_input[random_choice_index]
+            indices.remove(random_choice_index)
 
             # Extract and decode the generated portion
             output_ids = selected_sequence[input_length:].tolist()
@@ -315,12 +318,25 @@ Text: {input}
                 logger.info("Mutated prompt:")
                 logger.info(mutated_query)
 
-            rejection_pattern = r"I can(?:not|'t) assist with that request"
-            if re.search(rejection_pattern, mutated_query, re.IGNORECASE):
-                logger.warning(f"Original prompt cannot be mutated due to safety filter, using original prompt: {og_query}")
-                mutated_queries.append(og_query)
+            rejection_pattern = rejection_pattern = (
+    r"\bI\s+can(?:not|(?:\s*|['’])t)\s+"
+    r"(?:(?:assist|help)(?:\s+\w+){0,3}?\s+with|fulfil(?:l)?)\s+"
+    r"(?:this|that|your|the)\s+"
+    r"(request|task|query|question|prompt)\b"
+):
+            while re.search(rejection_pattern, mutated_query, re.IGNORECASE) and len(indices) > 0:
+                logger.warning(f"Original prompt cannot be mutated due to safety filter, trying another sequence")
+                random_choice_index = random.choice(indices)
+                selected_sequence = sequences_for_input[random_choice_index]
+                indices.remove(random_choice_index)
+                output_ids = selected_sequence[input_length:].tolist()
+                mutated_query = tokenizer.decode(output_ids, skip_special_tokens=True)
 
-            mutated_queries.append(mutated_query.strip())
+            if re.search(rejection_pattern, mutated_query, re.IGNORECASE):
+                logger.warning(f"All sequences rejected, using original query")
+                mutated_queries.append(og_query)
+            else:
+                mutated_queries.append(mutated_query.strip())
     
     logger.info(f"Generated {len(mutated_queries)} mutated queries")
     return mutated_queries
