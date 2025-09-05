@@ -289,7 +289,7 @@ Text: {input}
             num_return_sequences=num_return_sequences,
         )
 
-        for j, og_prompt in enumerate(batch_prompts):
+        for j, og_query in enumerate(queries[i:i + batch_size]):
             # Get the input length for this specific input
             input_length = len(model_inputs.input_ids[j])
 
@@ -307,17 +307,17 @@ Text: {input}
             output_ids = selected_sequence[input_length:].tolist()
             mutated_query = tokenizer.decode(output_ids, skip_special_tokens=True)
 
-            if j == random.randint(0, len(batch_prompts)-1):
+            if j == random.randint(0, batch_size-1):
                 print("Sampled prompt for display:")
-                print(og_prompt)
+                print(og_query)
                 print("Mutated prompt:")
                 print(mutated_query)
 
             rejection_pattern = r"I can(?:not|'t) assist with that request"
             if re.search(rejection_pattern, mutated_query, re.IGNORECASE):
                 print("Original prompt cannot be mutated due to safety filter, using original prompt:")
-                print(og_prompt)
-                mutated_queries.append(og_prompt)
+                print(og_query)
+                mutated_queries.append(og_query)
 
             mutated_queries.append(mutated_query.strip())
     
