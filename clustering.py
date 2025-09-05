@@ -246,6 +246,13 @@ Text: {input}
     print("mutation task prompt:")
     print(TASK_PROMPT)
 
+    rejection_pattern = (
+    r"\bI\s+can(?:not|(?:\s*|['’])t)\s+"
+    r"(?:(?:assist|help)(?:\s+\w+){0,3}?\s+with|fulfil(?:l)?)\s+"
+    r"(?:this|that|your|the)\s+"
+    r"(request|task|query|question|prompt)\b"
+)
+
     mutated_queries = []
     
     # Create prompts for each query
@@ -317,12 +324,6 @@ Text: {input}
                 logger.info("Mutated prompt:")
                 logger.info(mutated_query)
 
-            rejection_pattern = rejection_pattern = (
-    r"\bI\s+can(?:not|(?:\s*|['’])t)\s+"
-    r"(?:(?:assist|help)(?:\s+\w+){0,3}?\s+with|fulfil(?:l)?)\s+"
-    r"(?:this|that|your|the)\s+"
-    r"(request|task|query|question|prompt)\b"
-)
             while re.search(rejection_pattern, mutated_query, re.IGNORECASE) and len(indices) > 0:
                 logger.warning(f"Original prompt cannot be mutated due to safety filter, trying another sequence with {len(indices)} attempts left.")
                 random_choice_index = random.choice(indices)
