@@ -363,6 +363,8 @@ def main():
     results_dir = Path("outputs")
     results_dir.mkdir(parents=True, exist_ok=True)
 
+    print(config_paths)
+
     for config_path in config_paths:
         print(f"Running experiment with config: {config_path}")
         config = load_config(config_path)
