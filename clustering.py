@@ -307,6 +307,12 @@ Text: {input}
             output_ids = selected_sequence[input_length:].tolist()
             mutated_query = tokenizer.decode(output_ids, skip_special_tokens=True)
 
+            if j == random.randint(0, len(batch_prompts)-1):
+                print("Sampled prompt for display:")
+                print(og_prompt)
+                print("Mutated prompt:")
+                print(mutated_query)
+
             rejection_pattern = r"I can(?:not|'t) assist with that request"
             if re.search(rejection_pattern, mutated_query, re.IGNORECASE):
                 print("Original prompt cannot be mutated due to safety filter, using original prompt:")
