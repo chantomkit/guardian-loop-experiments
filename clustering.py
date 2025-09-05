@@ -319,7 +319,7 @@ Text: {input}
     return mutated_queries
 
 
-def load_config(config_path: str = "config.yaml") -> dict:
+def load_config(config_path: Path) -> dict:
     """Load configuration from YAML file"""
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -334,10 +334,11 @@ def load_config(config_path: str = "config.yaml") -> dict:
 
 
 def main():
-    config_paths = os.listdir("configs")
+    config_dir = Path("configs")
+    config_paths = list(config_dir.glob("*.yaml"))
 
     results_dir = Path("outputs")
-    os.mkdir(results_dir)  # this is a parent result output dir
+    results_dir.mkdir(parents=True, exist_ok=True)
 
     for config_path in config_paths:
         print(f"Running experiment with config: {config_path}")
