@@ -323,7 +323,7 @@ Text: {input}
     r"(?:(?:assist|help)(?:\s+\w+){0,3}?\s+with|fulfil(?:l)?)\s+"
     r"(?:this|that|your|the)\s+"
     r"(request|task|query|question|prompt)\b"
-):
+)
             while re.search(rejection_pattern, mutated_query, re.IGNORECASE) and len(indices) > 0:
                 logger.warning(f"Original prompt cannot be mutated due to safety filter, trying another sequence")
                 random_choice_index = random.choice(indices)
