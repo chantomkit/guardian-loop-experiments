@@ -250,10 +250,7 @@ Text: {input}
         # Tokenize batch
         model_inputs = tokenizer(
             batch_prompts, 
-            return_tensors="pt", 
-            padding=True, 
-            truncation=True,
-            max_length=4096
+            return_tensors="pt"
         ).to(model.device)
         
         # Generate in batch
@@ -265,7 +262,6 @@ Text: {input}
             top_p=0.8,
             top_k=20,
             min_p=0,
-            pad_token_id=tokenizer.pad_token_id
         )
         
         # Decode each output, extracting only the generated portion
