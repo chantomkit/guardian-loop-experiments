@@ -6,7 +6,7 @@ dataset:
   subset: null
   split: "330k_train"
   num_samples: null  # Use all samples if null
-  mutate: false
+  mutate: true
 
 # Model configuration
 model:
@@ -23,5 +23,5 @@ clustering:
 
 # Output configuration
 output:
-  dir_name: "BeaverTails"
+  dir_name: "BeaverTails_mutate"
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR

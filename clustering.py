@@ -103,7 +103,7 @@ def generate_embeddings(queries: List[str], model_name: str, domain: str, device
     prompt = TASK_PROMPT.format(DOMAIN=domain)
     print("TASK PROMPT:" + prompt)
 
-    embeddings = model.encode(queries, convert_to_tensor=True, prompt=prompt, device=device)
+    embeddings = model.encode(queries, convert_to_tensor=True, prompt=prompt, device=device, normalize_embeddings=True)
     logger.info(f"Generated embeddings shape: {embeddings.shape}")
     
     if save_embeddings_path:
@@ -187,7 +187,7 @@ def save_results(cluster_dict: Dict[str, List[str]], output_path: Path,  indent:
                    f"Mean: {sum(cluster_sizes)/len(cluster_sizes):.1f}")
 
 
-def mutate_queries(queries: List[str], batch_size: int = 4) -> List[str]:
+def mutate_queries(queries: List[str], batch_size: int = 16) -> List[str]:
     """
     Mutate a list of queries by paraphrasing them while preserving meaning.
     Only activated when config['dataset']['mutate'] is True.
@@ -224,7 +224,10 @@ You may reword, restructure sentences, or adjust phrasing.
 
 Text: {input}
 """
-    
+
+    print("mutation task prompt:")
+    print(TASK_PROMPT)
+
     mutated_queries = []
     
     # Create prompts for each query
@@ -259,6 +262,9 @@ Text: {input}
             max_new_tokens=1024,
             do_sample=True,
             temperature=0.7,
+            top_p=0.8,
+            top_k=20,
+            min_p=0,
             pad_token_id=tokenizer.pad_token_id
         )
         

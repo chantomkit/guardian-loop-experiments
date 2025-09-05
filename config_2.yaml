@@ -6,7 +6,7 @@ dataset:
   subset: "finance_input"
   split: null
   num_samples: null  # Use all samples if null
-  mutate: false
+  mutate: true
 
 # Model configuration
 model:
@@ -23,5 +23,5 @@ clustering:
 
 # Output configuration
 output:
-  dir_name: "PolyGuard_finance"
+  dir_name: "PolyGuard_finance_mutate"
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
