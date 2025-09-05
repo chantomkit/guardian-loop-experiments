@@ -242,10 +242,12 @@ Text: {input}
         )
         all_prompts.append(text)
     
+    logger.info(f"Generated {len(all_prompts)} prompts for mutation")
+    logger.info(f"Processing prompts in batches of {batch_size}")
     # Process in batches
     for i in range(0, len(all_prompts), batch_size):
         batch_prompts = all_prompts[i:i + batch_size]
-        logger.debug(f"Processing batch {i//batch_size + 1}/{(len(all_prompts) + batch_size - 1)//batch_size}")
+        logger.info(f"Processing batch {i//batch_size + 1}/{(len(all_prompts) + batch_size - 1)//batch_size}")
         
         # Tokenize batch
         model_inputs = tokenizer(
