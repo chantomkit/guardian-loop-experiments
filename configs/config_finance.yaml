@@ -23,5 +23,5 @@ clustering:
 
 # Output configuration
 output:
-  dir_name: "PolyGuard_finance_mutate"
+  dir_name: "PolyGuard_finance"
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR

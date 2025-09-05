@@ -23,5 +23,5 @@ clustering:
 
 # Output configuration
 output:
-  dir_name: "PolyGuard_law_mutate"
+  dir_name: "PolyGuard_law"
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
