@@ -206,7 +206,7 @@ def mutate_queries(queries: List[str], batch_size: int = 16) -> List[str]:
     
     # Load the tokenizer and model
     logger.info(f"Loading mutation model: {model_name}")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side='left')
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
@@ -250,7 +250,10 @@ Text: {input}
         # Tokenize batch
         model_inputs = tokenizer(
             batch_prompts, 
-            return_tensors="pt"
+            return_tensors="pt", 
+            padding=True, 
+            truncation=True,
+            max_length=4096
         ).to(model.device)
         
         # Generate in batch
@@ -262,6 +265,7 @@ Text: {input}
             top_p=0.8,
             top_k=20,
             min_p=0,
+            pad_token_id=tokenizer.pad_token_id
         )
         
         # Decode each output, extracting only the generated portion
