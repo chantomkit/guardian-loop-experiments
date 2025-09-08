@@ -31,17 +31,19 @@ def setup_logging(log_level: str = "INFO") -> None:
     )
 
 
-def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, split: Optional[str] = None, num_samples: Optional[int] = None) -> List[str]:
+def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, split: Optional[str] = None) -> pd.DataFrame:
     """Load dataset and extract prompts"""
     logger = logging.getLogger(__name__)
     logger.info(f"Loading dataset: {dataset_name}, subset: {subset}, split: {split}")
+
+    QUERY_COL = "prompt"
 
     if dataset_name == "PKU-Alignment/BeaverTails":
         dataset = load_dataset(dataset_name)
         df = dataset[split].data.to_pandas()
         logger.info(f"Dataset shape: {df.shape}")
-        queries = df.loc[~df["is_safe"], "prompt"]
-        logger.info(f"Filtered to {len(queries)} unsafe prompts")
+        df_filtered = df.loc[~df["is_safe"], :]
+        logger.info(f"Filtered to {len(df_filtered)} unsafe prompts")
 
     elif (dataset_name == "AI-Secure/PolyGuard"):
         dataset = load_dataset(dataset_name, subset)
@@ -49,30 +51,24 @@ def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, spl
             unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
             df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
             df = pd.concat(df_list, ignore_index=True)
-            queries = df["original instance"]
+            df = df.rename(columns={"original instance": QUERY_COL})
         elif subset == "cyber":
             df_list = [dataset[split].data.to_pandas() for split in dataset.column_names.keys()]
             df = pd.concat(df_list, ignore_index=True)
             df = df.loc[df.label == "unsafe", :]
-            queries = df["prompt"]
         elif subset == "education":
             unsafe_splits = [col for col in dataset.column_names.keys() if "unsafe" in col]
             df_list = [dataset[split].data.to_pandas() for split in unsafe_splits]
             df = pd.concat(df_list, ignore_index=True)
-            queries = df["instance"]
-
+            df = df.rename(columns={"instance": QUERY_COL})
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
-    print("Before dropping duplicates:", len(queries))
-    queries = queries.drop_duplicates(keep="first")
-    print("After dropping duplicates:", len(queries))
+    print("Before dropping duplicates:", len(df_filtered))
+    df_filtered = df_filtered.drop_duplicates(keep="first", subset=[QUERY_COL])
+    print("After dropping duplicates:", len(df_filtered))
 
-    if num_samples:
-        queries = queries.iloc[:num_samples]
-        logger.info(f"Limited to {len(queries)} samples")
-    
-    return queries.tolist()
+    return df_filtered
 
 
 def generate_embeddings(queries: List[str], model_name: str, domain: str, device: str = "auto", 
@@ -190,7 +186,7 @@ def save_results(cluster_dict: Dict[str, List[str]], output_path: Path,  indent:
                    f"Mean: {sum(cluster_sizes)/len(cluster_sizes):.1f}")
 
 
-def mutate_queries(queries: List[str], batch_size: int = 32, num_return_sequences: int = 3) -> List[str]:
+def mutate_queries(df: pd.DataFrame, batch_size: int = 32, num_return_sequences: int = 3) -> pd.DataFrame:
     """
     Mutate a list of queries by paraphrasing them while preserving meaning.
     Only activated when config['dataset']['mutate'] is True.
@@ -202,6 +198,9 @@ def mutate_queries(queries: List[str], batch_size: int = 32, num_return_sequence
     Returns:
         list: List of mutated queries
     """
+    QUERY_COL = "prompt"
+    queries = df[QUERY_COL].tolist()
+
     logger = logging.getLogger(__name__)
     logger.info(f"Mutating {len(queries)} queries")
     
@@ -340,7 +339,8 @@ Text: {input}
                 mutated_queries.append(mutated_query.strip())
     
     logger.info(f"Generated {len(mutated_queries)} mutated queries")
-    return mutated_queries
+    df["mutated_prompt"] = mutated_queries
+    return df
 
 
 def load_config(config_path: Path) -> dict:
@@ -375,7 +375,7 @@ def main():
         
         try:
             # Load and filter dataset
-            queries = load_and_filter_dataset(
+            df = load_and_filter_dataset(
                 config['dataset']['name'],
                 config['dataset']['subset'],
                 config['dataset']['split'],
@@ -387,18 +387,20 @@ def main():
 
             # mutate queries
             if config['dataset']['mutate']:
-                queries = mutate_queries(queries)
+                df = mutate_queries(df)
                 torch.cuda.empty_cache()
                 gc.collect()
 
-            queries_path = output_dir / Path("queries.json")
-            json.dump(queries, open(queries_path, "w"), indent=2)
-            print(f"Filtered queries saved to {queries_path}")
+            df_path = output_dir / Path("data.csv")
+            df.to_csv(df_path, index=False)
+            print(f"Filtered dataset saved to {df_path}")
 
-            if not queries:
+            if df.empty:
                 logger.error("No queries found after filtering")
+                raise ValueError("No queries to process")
             
             # Generate embeddings
+            queries = df["mutated_prompt"].tolist() if config['dataset']['mutate'] else df["prompt"].tolist()
             embeddings_path = output_dir / Path("embeddings.pt")
             embeddings = generate_embeddings(
                 queries,
