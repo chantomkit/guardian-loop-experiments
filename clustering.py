@@ -64,8 +64,8 @@ def load_and_filter_dataset(dataset_name: str, subset: Optional[str] = None, spl
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
-    print("Before dropping duplicates:", len(df_filtered))
-    df_filtered = df_filtered.drop_duplicates(keep="first", subset=[QUERY_COL])
+    print("Before dropping duplicates:", len(df))
+    df_filtered = df.drop_duplicates(keep="first", subset=[QUERY_COL])
     print("After dropping duplicates:", len(df_filtered))
 
     return df_filtered
