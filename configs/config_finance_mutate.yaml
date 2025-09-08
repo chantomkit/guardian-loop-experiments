@@ -5,7 +5,6 @@ dataset:
   name: "AI-Secure/PolyGuard"
   subset: "finance_input"
   split: null
-  num_samples: null  # Use all samples if null
   mutate: true
 
 # Model configuration

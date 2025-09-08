@@ -379,7 +379,6 @@ def main():
                 config['dataset']['name'],
                 config['dataset']['subset'],
                 config['dataset']['split'],
-                config['dataset']['num_samples'],
             )
 
             output_dir = results_dir / Path(config['output']['dir_name'])

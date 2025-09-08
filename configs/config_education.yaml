@@ -5,7 +5,6 @@ dataset:
   name: "AI-Secure/PolyGuard"
   subset: "education"
   split: null
-  num_samples: null  # Use all samples if null
   mutate: false
 
 # Model configuration
